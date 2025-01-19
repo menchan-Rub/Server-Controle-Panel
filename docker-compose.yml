@@ -1,0 +1,57 @@
+version: '3.8'
+
+services:
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    environment:
+      - NEXT_PUBLIC_API_URL=http://localhost:3001
+      - NEXTAUTH_URL=http://localhost:3000
+      - NEXTAUTH_SECRET=${NEXTAUTH_SECRET}
+    restart: always
+    depends_on:
+      - backend
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    environment:
+      - JWT_SECRET=${JWT_SECRET}
+      - DATABASE_URL=postgresql://postgres:${DB_PASSWORD}@db:5432/serverpanel
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - /proc:/host/proc:ro
+      - /sys:/host/sys:ro
+    privileged: true
+    restart: always
+    depends_on:
+      - db
+
+  db:
+    image: postgres:15-alpine
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=${DB_PASSWORD}
+      - POSTGRES_DB=serverpanel
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    restart: always
+
+  nginx:
+    image: nginx:alpine
+    ports:
+      - "${PANEL_PORT}:${PANEL_PORT}"
+    volumes:
+      - ./configs/nginx.conf:/etc/nginx/conf.d/default.conf
+      - ${PANEL_SSL_KEY}:/etc/server-control-panel/ssl/private.key
+      - ${PANEL_SSL_CERT}:/etc/server-control-panel/ssl/certificate.crt
+    depends_on:
+      - frontend
+      - backend
+    restart: always
+
+volumes:
+  postgres_data:
+
