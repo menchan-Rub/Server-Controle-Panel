@@ -72,12 +72,12 @@ NEXTAUTH_URL=http://$SERVER_IP:10000
 HOST=$SERVER_IP
 EOL
 
-# Nginxの設定
-echo -e "${BLUE}Nginxの設定を行っています...${NC}"
+# Nginxの設定を更新（該当部分のみ）
 cat > $INSTALL_DIR/configs/nginx.conf << EOL
 server {
-    listen 10000 ssl;
-    server_name $SERVER_IP;
+    listen $SERVER_IP:10000 ssl;
+    listen 127.0.0.1:10000 ssl;
+    server_name $SERVER_IP localhost 127.0.0.1;
 
     ssl_certificate /etc/server-control-panel/ssl/certificate.crt;
     ssl_certificate_key /etc/server-control-panel/ssl/private.key;
@@ -120,7 +120,6 @@ server {
     }
 }
 EOL
-
 # systemdサービスの設定
 echo -e "${BLUE}サービスをインストールしています...${NC}"
 cat > /etc/systemd/system/server-control-panel.service << EOL
